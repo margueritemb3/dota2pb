@@ -111,19 +111,18 @@ client.on('message', (msg) => {
     //get notified/alerted/@-ed when a new patch update is posted
     else if (msg.content === '!patch notify') {
         //if not yet subscribed, then error
-        db.collection("channels").doc(msg.guild.name).get().then((doc) => {
+        db.collection("channels").doc(msg.guild.id).get().then((doc) => {
             if (doc.exists) {
-                msg.member.roles.add(botRole)
+
+                msg.member.roles.add(doc.data().role_id);
                 msg.reply("you have subscribed to be notified of Dota2 patch notes and news");
+
             } else {
                 // doc.data() will be undefined in this case
-                msg.reply("you have subscribed to be notified of Dota2 patch notes and news");
+                msg.reply("please subscribe first");
             }
         })
             .catch(e => console.error(e));
-
-        msg.member.roles.add(botRole)
-        msg.reply("you have subscribed to be notified of Dota2 patch notes and news");
     }
 })
 
