@@ -35,10 +35,6 @@ setInterval(() => {
                     return doc.data().last_patch_id;
                 }).then(lastPatchId => {
                     if (data.gid !== lastPatchId) {
-                        // for (chanel in channels) {
-                        //     channel.send("<@&" + botRole.id + "> " + data.url);
-                        //     lastPatchId = data.gid;
-                        // }
                         db.collection('channels').get()
                             .then(snapshot => {
                                 snapshot.forEach((doc) => {
@@ -55,7 +51,7 @@ setInterval(() => {
                 .catch(e => console.error(e));
         })
         .catch(e => console.error(e));
-}, 5000); //120000 (2 mintues)
+}, 120000); //120000 (2 mintues) (5000 for 5 seconds)
 
 client.on('message', (msg) => {
 
@@ -83,57 +79,33 @@ client.on('message', (msg) => {
 
     //subscribe a channel to recieve Dota 2 updates
     else if (msg.content === '!patch subscribe') {
-        //check for existing role
-        let botRole = msg.guild.roles.cache.find(role => {
-            return role.name === 'Dota2PatchBotNotification';
-        });
+        if (!msg.member.hasPermission("ADMINISTRATOR")) {
+            msg.reply("Server admin must subscribe.");
+        } else {
 
-        //create new role if it doesn't exist
-        if (botRole === undefined) {
-            botRole = msg.guild.roles.create({
-                data: {
-                    name: 'Dota2PatchBotNotification',
-                    color: 'RED',
-                },
-                reason: 'role to notify people of Dota 2 patch notes from the Dota 2 Patch Bot',
+            //check for existing role
+            let botRole = msg.guild.roles.cache.find(role => {
+                return role.name === 'Dota2PatchBotNotification';
             });
+
+            //create new role if it doesn't exist
+            if (botRole === undefined) {
+                botRole = msg.guild.roles.create({
+                    data: {
+                        name: 'Dota2PatchBotNotification',
+                        color: 'RED',
+                    },
+                    reason: 'role to notify people of Dota 2 patch notes from the Dota 2 Patch Bot',
+                });
+            }
+            db.collection('channels').doc(msg.guild.id)
+                .set({
+                    'channel_id': msg.channel.id,
+                    'role_id': botRole.id
+                });
+            client.channels.cache.get(msg.channel.id).send('Subscribed to #' + msg.channel.name + ' in ' + msg.guild.name);
         }
-        db.collection('channels').doc(msg.guild.id)
-            .set({
-                'channel_id': msg.channel.id,
-                'role_id': botRole.id
-            });
-        client.channels.cache.get(msg.channel.id).send('Subscribed to #' + msg.channel.name + ' in ' + msg.guild.name);
     }
-
-    //subscribe a channel to recieve Dota 2 updates
-    // else if (msg.content === '!patch subscribe') {
-    //     let subscribedChannel = msg.channel.id;
-    //     client.channels.cache.get(subscribedChannel).send('Subscribed to #' + msg.channel.name + ' in ' + msg.channel.guild.name);
-    //     let lastPatchId = ""
-    //     const patchPromise = new Promise((resolve, reject) => {
-    //         setInterval(() => {
-    //             if (subscribedChannel != "") {
-    //                 fetch("http://api.steampowered.com/ISteamNews/GetNewsForApp/v0002/?appid=570&count=100&format=json")
-    //                     .then(data => data.json())
-    //                     .then(data => {
-    //                         const newsArr = data.appnews.newsitems;
-    //                         const newestNews = newsArr.find(n => {
-    //                             return n.feed_type === 1;
-    //                         })
-    //                         return newestNews;
-    //                     })
-    //                     .then(data => {
-    //                         if (data.gid !== lastPatchId) {
-    //                             client.channels.cache.get(subscribedChannel).send("<@&" + botRole.id + "> " + data.url);
-    //                             lastPatchId = data.gid;
-    //                         }
-    //                     })
-    //                     .catch(e => console.error(e));
-    //             }
-    //         }, 5000) //120000 (2 mintues)
-    //     })
-    // }
 
 
     //get notified/alerted/@-ed when a new patch update is posted
